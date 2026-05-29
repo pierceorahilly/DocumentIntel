@@ -27,7 +27,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: us-east-1
+          AWS_REGION: eu-west-1
         run: |
           JAR_FILE="lambda-auth/target/bankbuddy-lambda-auth-1.0.0.jar"
 
@@ -46,6 +46,6 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: us-east-1
+          AWS_REGION: eu-west-1
         run: |
           echo "⏳ Staging deployment placeholder (set up staging Lambdas first)"
