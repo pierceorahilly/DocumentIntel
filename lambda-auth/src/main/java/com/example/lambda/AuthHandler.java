@@ -41,6 +41,7 @@ public class AuthHandler implements RequestHandler<APIGatewayProxyRequestEvent, 
         this.objectMapper = new ObjectMapper();
 
         System.out.println("[AuthHandler] Initialized - UserPool: " + userPoolId);
+        System.out.println("[AuthHandler] Deploy test - " + Instant.now());
     }
 
     @Override
