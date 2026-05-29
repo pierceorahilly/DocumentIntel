@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Statement</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            border-bottom: 2px solid #1e3a8a;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .bank-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1e3a8a;
+            margin-bottom: 10px;
+        }
+
+        .statement-title {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .account-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            margin-bottom: 8px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #1e3a8a;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+
+        thead {
+            background-color: #1e3a8a;
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid #1e3a8a;
+        }
+
+        td {
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            font-size: 14px;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tbody tr:hover {
+            background-color: #f0f4ff;
+        }
+
+        .date {
+            color: #555;
+            width: 12%;
+        }
+
+        .description {
+            color: #333;
+            font-weight: 500;
+            width: 40%;
+        }
+
+        .debit {
+            text-align: right;
+            color: #d32f2f;
+            width: 16%;
+            font-weight: 500;
+        }
+
+        .credit {
+            text-align: right;
+            color: #388e3c;
+            width: 16%;
+            font-weight: 500;
+        }
+
+        .balance {
+            text-align: right;
+            color: #1e3a8a;
+            font-weight: 600;
+            width: 16%;
+        }
+
+        .summary {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .summary-label {
+            font-weight: 600;
+            width: 200px;
+            text-align: right;
+            margin-right: 20px;
+            color: #555;
+        }
+
+        .summary-amount {
+            width: 150px;
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .closing-balance {
+            font-size: 16px;
+            color: #1e3a8a;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+        }
+
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="bank-name">🏦 Allied Bank Ireland</div>
+            <div class="statement-title">Account Statement</div>
+        </div>
+
+        <div class="account-info">
+            <div>
+                <div class="info-item">
+                    <span class="info-label">Account Holder:</span> John Pierce O'Rahilly
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Account Number:</span> IE12 ABCD 0123 4567 8901 23
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Account Type:</span> Current Account
+                </div>
+            </div>
+            <div>
+                <div class="info-item">
+                    <span class="info-label">Statement Period:</span> May 1, 2026 - June 30, 2026
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Statement Date:</span> June 30, 2026
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Sort Code:</span> 123-456
+                </div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="date">Date</th>
+                    <th class="description">Description</th>
+                    <th class="debit">Debit (€)</th>
+                    <th class="credit">Credit (€)</th>
+                    <th class="balance">Balance (€)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="date">2026-05-01</td>
+                    <td class="description">Opening Balance</td>
+                    <td class="debit">-</td>
+                    <td class="credit">-</td>
+                    <td class="balance">5,000.00</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-05-02</td>
+                    <td class="description">Three Mobile - Monthly Plan</td>
+                    <td class="debit">60.00</td>
+                    <td class="credit">-</td>
+                    <td class="balance">4,940.00</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-05-05</td>
+                    <td class="description">Electric Ireland - Bill Payment</td>
+                    <td class="debit">85.50</td>
+                    <td class="credit">-</td>
+                    <td class="balance">4,854.50</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-05-07</td>
+                    <td class="description">Employer Ltd - Salary Deposit</td>
+                    <td class="debit">-</td>
+                    <td class="credit">2,500.00</td>
+                    <td class="balance">7,354.50</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-05-10</td>
+                    <td class="description">Tesco Supermarket - Groceries</td>
+                    <td class="debit">45.30</td>
+                    <td class="credit">-</td>
+                    <td class="balance">7,309.20</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-05-12</td>
+                    <td class="description">Netflix Subscription</td>
+                    <td class="debit">15.99</td>
+                    <td class="credit">-</td>
+                    <td class="balance">7,293.21</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-05-15</td>
+                    <td class="description">Fitness First - Gym Membership</td>
+                    <td class="debit">35.00</td>
+                    <td class="credit">-</td>
+                    <td class="balance">7,258.21</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-05-18</td>
+                    <td class="description">Irish Water - Water Bill</td>
+                    <td class="debit">42.15</td>
+                    <td class="credit">-</td>
+                    <td class="balance">7,216.06</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-05-20</td>
+                    <td class="description">Boots Pharmacy - Health & Beauty</td>
+                    <td class="debit">28.70</td>
+                    <td class="credit">-</td>
+                    <td class="balance">7,187.36</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-05-22</td>
+                    <td class="description">Lidl - Groceries</td>
+                    <td class="debit">52.40</td>
+                    <td class="credit">-</td>
+                    <td class="balance">7,134.96</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-05-25</td>
+                    <td class="description">Shell Petrol Station - Fuel</td>
+                    <td class="debit">65.00</td>
+                    <td class="credit">-</td>
+                    <td class="balance">7,069.96</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-05-28</td>
+                    <td class="description">Amazon EU - Online Shopping</td>
+                    <td class="debit">39.99</td>
+                    <td class="credit">-</td>
+                    <td class="balance">7,029.97</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-06-01</td>
+                    <td class="description">Three Mobile - Monthly Plan</td>
+                    <td class="debit">60.00</td>
+                    <td class="credit">-</td>
+                    <td class="balance">6,969.97</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-06-03</td>
+                    <td class="description">Dunnes Stores - Groceries</td>
+                    <td class="debit">58.25</td>
+                    <td class="credit">-</td>
+                    <td class="balance">6,911.72</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-06-05</td>
+                    <td class="description">Electric Ireland - Bill Payment</td>
+                    <td class="debit">82.00</td>
+                    <td class="credit">-</td>
+                    <td class="balance">6,829.72</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-06-07</td>
+                    <td class="description">Employer Ltd - Salary Deposit</td>
+                    <td class="debit">-</td>
+                    <td class="credit">2,500.00</td>
+                    <td class="balance">9,329.72</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-06-10</td>
+                    <td class="description">Spotify Premium - Music Streaming</td>
+                    <td class="debit">9.99</td>
+                    <td class="credit">-</td>
+                    <td class="balance">9,319.73</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-06-12</td>
+                    <td class="description">Arnotts Department Store - Clothing</td>
+                    <td class="debit">125.50</td>
+                    <td class="credit">-</td>
+                    <td class="balance">9,194.23</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-06-15</td>
+                    <td class="description">Fitness First - Gym Membership</td>
+                    <td class="debit">35.00</td>
+                    <td class="credit">-</td>
+                    <td class="balance">9,159.23</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-06-18</td>
+                    <td class="description">Irish Water - Water Bill</td>
+                    <td class="debit">42.15</td>
+                    <td class="credit">-</td>
+                    <td class="balance">9,117.08</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-06-20</td>
+                    <td class="description">Tesco Supermarket - Groceries</td>
+                    <td class="debit">62.40</td>
+                    <td class="credit">-</td>
+                    <td class="balance">9,054.68</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-06-23</td>
+                    <td class="description">BP Petrol Station - Fuel</td>
+                    <td class="debit">70.00</td>
+                    <td class="credit">-</td>
+                    <td class="balance">8,984.68</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-06-25</td>
+                    <td class="description">Ryanair - Flight Booking</td>
+                    <td class="debit">189.99</td>
+                    <td class="credit">-</td>
+                    <td class="balance">8,794.69</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-06-28</td>
+                    <td class="description">Thai Restaurant - Dining Out</td>
+                    <td class="debit">45.80</td>
+                    <td class="credit">-</td>
+                    <td class="balance">8,748.89</td>
+                </tr>
+                <tr>
+                    <td class="date">2026-06-30</td>
+                    <td class="description">Closing Balance</td>
+                    <td class="debit">-</td>
+                    <td class="credit">-</td>
+                    <td class="balance">8,748.89</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="summary">
+            <div class="summary-row">
+                <div class="summary-label">Total Debits:</div>
+                <div class="summary-amount">€1,251.11</div>
+            </div>
+            <div class="summary-row">
+                <div class="summary-label">Total Credits:</div>
+                <div class="summary-amount">€5,000.00</div>
+            </div>
+            <div class="summary-row closing-balance">
+                <div class="summary-label">Closing Balance:</div>
+                <div class="summary-amount">€8,748.89</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>This is a computer-generated statement. For more information, visit www.alliedbank.ie or contact us at 1800 123 456</p>
+            <p>© 2026 Allied Bank Ireland. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

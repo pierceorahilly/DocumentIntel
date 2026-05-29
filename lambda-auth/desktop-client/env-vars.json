@@ -1,0 +1,10 @@
+  {
+    "Variables": {
+      "S3_BUCKET": "bankbud",
+      
+      "BEDROCK_MODEL_ID": "arn:aws:bedrock:eu-west-1:073118365801:inference-profile/eu.anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "DYNAMODB_USERS_TABLE": "BankBuddy-Users",
+      "DYNAMODB_UPLOADS_TABLE": "BankBuddy-Uploads",
+      "DYNAMODB_TRANSACTIONS_TABLE": "BankBuddy-Transactions"
+    }
+  }

@@ -1,0 +1,53 @@
+ {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ],
+        "Resource": [
+          "arn:aws:dynamodb:eu-west-1:*:table/BankBuddy-Users",
+          "arn:aws:dynamodb:eu-west-1:*:table/BankBuddy-Uploads",
+          "arn:aws:dynamodb:eu-west-1:*:table/BankBuddy-Transactions",
+          "arn:aws:dynamodb:eu-west-1:*:table/BankBuddy-*/index/*"
+        ]
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:PutObject",
+          "s3:GetObject"
+        ],
+        "Resource": "arn:aws:s3:::bankbud/*"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "textract:AnalyzeDocument",
+          "textract:DetectDocumentText"
+        ],
+        "Resource": "*"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "bedrock:InvokeModel"
+        ],
+        "Resource": "arn:aws:bedrock:eu-west-1:*:inference-profile/*"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        "Resource": "arn:aws:logs:eu-west-1:*:*"
+      }
+    ]
+  }

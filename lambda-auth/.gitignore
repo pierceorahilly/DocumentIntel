@@ -1,0 +1,75 @@
+# Build outputs
+target/
+build/
+dist/
+*.jar
+*.class
+*.war
+*.ear
+
+# Windows artifacts
+nul
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# Flutter
+flutter-client/.dart_tool/
+flutter-client/.flutter-plugins-dependencies
+flutter-client/build/
+flutter-client/.packages
+flutter-client/pubspec.lock
+
+# Android
+.gradle/
+gradle/
+local.properties
+*.apk
+*.aab
+android/.classpath
+android/.project
+android/.settings/
+
+# Desktop client
+desktop-client/target/
+
+# Mobile client
+mobile-client/build/
+mobile-client/.gradle/
+
+# Node/npm (if used)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Maven
+.m2/
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+aws-setup/deployment-output.json
+*.properties.local
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+*.zip
+*.tar.gz
+
+# Misc
+.classpath
+.project
+.settings/
+*.bak
+*.orig

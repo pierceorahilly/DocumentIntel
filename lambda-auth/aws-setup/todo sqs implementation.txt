@@ -1,0 +1,16 @@
+  When you come back:
+
+  Just say "continue the async SQS implementation" and I'll:
+  1. Build the JAR
+  2. Deploy the 3 new Lambda functions
+  3. Configure IAM & API Gateway
+  4. Update the client
+  5. Test everything
+
+  All the code is in:
+  D:\simple-bank-ai_patch\lambda-auth\src\main\java\com\example\lambda\
+  - InitiateUploadHandler.java (new)
+  - ProcessUploadHandler.java (new)
+  - GetUploadStatusHandler.java (new)
+
+  Nothing will be lost! Take your time, and we'll finish this when you're ready. 👍

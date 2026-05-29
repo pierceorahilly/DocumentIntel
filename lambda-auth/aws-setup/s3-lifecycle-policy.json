@@ -1,0 +1,17 @@
+{
+  "Rules": [
+    {
+      "Id": "DeleteOldPDFsAfter90Days",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": "users/"
+      },
+      "Expiration": {
+        "Days": 90
+      },
+      "NoncurrentVersionExpiration": {
+        "NoncurrentDays": 1
+      }
+    }
+  ]
+}
