@@ -30,15 +30,12 @@ jobs:
           AWS_REGION: eu-west-1
         run: |
           JAR_FILE="lambda-auth/target/bankbuddy-lambda-auth-1.0.0.jar"
-
-          # Deploy to all 6 Lambda functions
-          aws lambda update-function-code --function-name GuideYaAuthHandler --zip-file fileb://$JAR_FILE
-          aws lambda update-function-code --function-name GuideYaInitiateUpload --zip-file fileb://$JAR_FILE
-          aws lambda update-function-code --function-name GuideYaUploadHandler --zip-file fileb://$JAR_FILE
-          aws lambda update-function-code --function-name GuideYaProcessUpload --zip-file fileb://$JAR_FILE
-          aws lambda update-function-code --function-name GuideYaGetUploadStatus --zip-file fileb://$JAR_FILE
-          aws lambda update-function-code --function-name GuideYaContactRequestHandler --zip-file fileb://$JAR_FILE
-
+          aws lambda update-function-code --function-name GuideYaAuthHandler --zip-file fileb://$JAR_FILE --region eu-west-1
+          aws lambda update-function-code --function-name GuideYaInitiateUpload --zip-file fileb://$JAR_FILE --region eu-west-1
+          aws lambda update-function-code --function-name GuideYaUploadHandler --zip-file fileb://$JAR_FILE --region eu-west-1
+          aws lambda update-function-code --function-name GuideYaProcessUpload --zip-file fileb://$JAR_FILE --region eu-west-1
+          aws lambda update-function-code --function-name GuideYaGetUploadStatus --zip-file fileb://$JAR_FILE --region eu-west-1
+          aws lambda update-function-code --function-name GuideYaContactRequestHandler --zip-file fileb://$JAR_FILE --region eu-west-1
           echo "✅ Deployed to all 6 production Lambda functions"
 
       - name: Deploy to Lambda (Staging)
