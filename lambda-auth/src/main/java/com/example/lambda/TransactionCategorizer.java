@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
  */
 public class TransactionCategorizer {
 
+    private static final String STAGING_TEST = "v2-staging-deploy-test"; // staging auto-deploy verification
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     // Category patterns (case-insensitive matching) — 15 categories

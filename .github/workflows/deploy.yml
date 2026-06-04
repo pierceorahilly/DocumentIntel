@@ -45,4 +45,11 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: eu-west-1
         run: |
-          echo "⏳ Staging deployment placeholder (set up staging Lambdas first)"
+          JAR_FILE="lambda-auth/target/bankbuddy-lambda-auth-1.0.0.jar"
+          aws lambda update-function-code --function-name GuideYaAuthHandler-staging --zip-file fileb://$JAR_FILE --region eu-west-1
+          aws lambda update-function-code --function-name GuideYaInitiateUpload-staging --zip-file fileb://$JAR_FILE --region eu-west-1
+          aws lambda update-function-code --function-name GuideYaUploadHandler-staging --zip-file fileb://$JAR_FILE --region eu-west-1
+          aws lambda update-function-code --function-name GuideYaProcessUpload-staging --zip-file fileb://$JAR_FILE --region eu-west-1
+          aws lambda update-function-code --function-name GuideYaGetUploadStatus-staging --zip-file fileb://$JAR_FILE --region eu-west-1
+          aws lambda update-function-code --function-name GuideYaContactRequestHandler-staging --zip-file fileb://$JAR_FILE --region eu-west-1
+          echo "✅ Deployed to all 6 staging Lambda functions"
