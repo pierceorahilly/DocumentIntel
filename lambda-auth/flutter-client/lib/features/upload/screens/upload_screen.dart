@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdfx/pdfx.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/upload_provider.dart';
@@ -65,39 +67,34 @@ class UploadScreen extends ConsumerWidget {
                 style: TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 32),
-              // File selection
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
+              // File selection and preview
+              if (uploadState.hasFile)
+                Expanded(
                   child: Column(
                     children: [
-                      Icon(
-                        Icons.picture_as_pdf,
-                        size: 48,
-                        color: AppColors.textSecondary,
+                      Text(
+                        uploadState.selectedFilename!,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 16),
+                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
-                      if (uploadState.hasFile)
-                        Text(
-                          uploadState.selectedFilename!,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 16),
-                          textAlign: TextAlign.center,
-                        )
-                      else
-                        Text(
-                          'No file selected',
-                          style: TextStyle(color: AppColors.textSecondary),
+                      Expanded(
+                        child: Card(
+                          child: _PdfPreview(
+                            bytes: uploadState.selectedBytes!,
+                          ),
                         ),
+                      ),
                       const SizedBox(height: 16),
                       if (isIOS)
                         CupertinoButton(
-                          color: AppColors.primary,
+                          color: AppColors.textSecondary,
                           onPressed: uploadState.isBusy
                               ? null
                               : () =>
                                   ref.read(uploadProvider.notifier).pickFile(),
-                          child: const Text('Select PDF File'),
+                          child: const Text('Choose Different PDF'),
                         )
                       else
                         ElevatedButton.icon(
@@ -106,12 +103,50 @@ class UploadScreen extends ConsumerWidget {
                               : () =>
                                   ref.read(uploadProvider.notifier).pickFile(),
                           icon: const Icon(Icons.file_upload_outlined),
-                          label: const Text('Select PDF File'),
+                          label: const Text('Choose Different PDF'),
                         ),
                     ],
                   ),
+                )
+              else
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.picture_as_pdf,
+                          size: 48,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No file selected',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                        const SizedBox(height: 16),
+                        if (isIOS)
+                          CupertinoButton(
+                            color: AppColors.primary,
+                            onPressed: uploadState.isBusy
+                                ? null
+                                : () =>
+                                    ref.read(uploadProvider.notifier).pickFile(),
+                            child: const Text('Select PDF File'),
+                          )
+                        else
+                          ElevatedButton.icon(
+                            onPressed: uploadState.isBusy
+                                ? null
+                                : () =>
+                                    ref.read(uploadProvider.notifier).pickFile(),
+                            icon: const Icon(Icons.file_upload_outlined),
+                            label: const Text('Select PDF File'),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
               const SizedBox(height: 16),
               // Upload button
               if (isIOS)
@@ -201,6 +236,88 @@ class _StatusIndicator extends StatelessWidget {
           ),
         const SizedBox(width: 12),
         Text(text, style: TextStyle(color: AppColors.textSecondary)),
+      ],
+    );
+  }
+}
+
+class _PdfPreview extends StatefulWidget {
+  final Uint8List bytes;
+
+  const _PdfPreview({required this.bytes});
+
+  @override
+  State<_PdfPreview> createState() => _PdfPreviewState();
+}
+
+class _PdfPreviewState extends State<_PdfPreview> {
+  late PdfController _pdfController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pdfController = PdfController(
+      document: PdfDocument.fromBytes(widget.bytes),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pdfController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: PdfViewer(
+            controller: _pdfController,
+            builders: PdfViewerBuilders(
+              documentLoaderBuilder: (context) =>
+                  const Center(child: CircularProgressIndicator()),
+              pageLoaderBuilder: (context) =>
+                  const Center(child: CircularProgressIndicator()),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.navigate_before),
+                onPressed: () {
+                  _pdfController.previousPage();
+                },
+              ),
+              StreamBuilder<int>(
+                stream: _pdfController.pageNumber,
+                builder: (context, snapshot) {
+                  final currentPage = snapshot.data ?? 1;
+                  return StreamBuilder<int>(
+                    stream: _pdfController.pagesCount,
+                    builder: (context, snapshot) {
+                      final totalPages = snapshot.data ?? 1;
+                      return Text(
+                        '$currentPage / $totalPages',
+                        style: const TextStyle(fontSize: 14),
+                      );
+                    },
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.navigate_next),
+                onPressed: () {
+                  _pdfController.nextPage();
+                },
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

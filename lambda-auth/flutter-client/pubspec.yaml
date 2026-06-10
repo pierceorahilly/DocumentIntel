@@ -35,6 +35,9 @@ dependencies:
   # Date formatting
   intl: ^0.20.2
 
+  # PDF viewer
+  pdfx: ^2.8.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
