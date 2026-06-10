@@ -2,9 +2,10 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pdfx/pdfx.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/upload_provider.dart';
@@ -251,74 +252,76 @@ class _PdfPreview extends StatefulWidget {
 }
 
 class _PdfPreviewState extends State<_PdfPreview> {
-  late PdfController _pdfController;
+  late Future<String> _pdfFilePath;
+  int _totalPages = 0;
+  int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
-    _pdfController = PdfController(
-      document: PdfDocument.fromBytes(widget.bytes),
-    );
+    _pdfFilePath = _writeBytesToFile(widget.bytes);
   }
 
-  @override
-  void dispose() {
-    _pdfController.dispose();
-    super.dispose();
+  Future<String> _writeBytesToFile(Uint8List bytes) async {
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/preview_pdf_${DateTime.now().millisecondsSinceEpoch}.pdf');
+    await file.writeAsBytes(bytes);
+    return file.path;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: PdfViewer(
-            controller: _pdfController,
-            builders: PdfViewerBuilders(
-              documentLoaderBuilder: (context) =>
-                  const Center(child: CircularProgressIndicator()),
-              pageLoaderBuilder: (context) =>
-                  const Center(child: CircularProgressIndicator()),
+    return FutureBuilder<String>(
+      future: _pdfFilePath,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError || !snapshot.hasData) {
+          return Center(
+            child: Text(
+              'Error loading PDF: ${snapshot.error}',
+              textAlign: TextAlign.center,
             ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.navigate_before),
-                onPressed: () {
-                  _pdfController.previousPage();
+          );
+        }
+
+        final filePath = snapshot.data!;
+
+        return Column(
+          children: [
+            Expanded(
+              child: PDFView(
+                filePath: filePath,
+                enableSwipe: true,
+                swipeHorizontal: false,
+                autoSpacing: false,
+                pageFling: true,
+                fitPolicy: FitPolicy.WIDTH,
+                onRender: (pages) {
+                  setState(() {
+                    _totalPages = pages ?? 0;
+                  });
+                },
+                onPageChanged: (int? page, int? total) {
+                  setState(() {
+                    _currentPage = page ?? 0;
+                  });
                 },
               ),
-              StreamBuilder<int>(
-                stream: _pdfController.pageNumber,
-                builder: (context, snapshot) {
-                  final currentPage = snapshot.data ?? 1;
-                  return StreamBuilder<int>(
-                    stream: _pdfController.pagesCount,
-                    builder: (context, snapshot) {
-                      final totalPages = snapshot.data ?? 1;
-                      return Text(
-                        '$currentPage / $totalPages',
-                        style: const TextStyle(fontSize: 14),
-                      );
-                    },
-                  );
-                },
+            ),
+            if (_totalPages > 0)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'Page ${_currentPage + 1} of $_totalPages',
+                  style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                ),
               ),
-              IconButton(
-                icon: const Icon(Icons.navigate_next),
-                onPressed: () {
-                  _pdfController.nextPage();
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
