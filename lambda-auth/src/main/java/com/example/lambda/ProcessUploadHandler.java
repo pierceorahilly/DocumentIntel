@@ -90,15 +90,15 @@ public class ProcessUploadHandler implements RequestHandler<SQSEvent, Void> {
                     .writeValueAsString(categoryAnalysis);
             System.out.println("✅ Categorized transactions - Biggest category: " + categoryAnalysis.biggestCategory);
 
-            // 2b. LLM fallback: DISABLED — was timing out; transactions stay as "Other"
-            // int otherCount = categoryAnalysis.categoryCounts.getOrDefault("Other", 0);
-            // if (otherCount > 0) {
-            //     System.out.println("⏳ Running LLM fallback for " + otherCount + " uncategorized transactions...");
-            //     TransactionCategorizer.recategorizeWithLLM(categoryAnalysis, bedrockService);
-            //     // Re-serialize after LLM recategorization
-            //     categoryAnalysisJson = objectMapper.writerWithDefaultPrettyPrinter()
-            //             .writeValueAsString(categoryAnalysis);
-            // }
+            // 2b. LLM fallback: Recategorize uncategorized transactions
+            int otherCount = categoryAnalysis.categoryCounts.getOrDefault("Other", 0);
+            if (otherCount > 0) {
+                System.out.println("⏳ Running LLM fallback for " + otherCount + " uncategorized transactions...");
+                TransactionCategorizer.recategorizeWithLLM(categoryAnalysis, bedrockService);
+                // Re-serialize after LLM recategorization
+                categoryAnalysisJson = objectMapper.writerWithDefaultPrettyPrinter()
+                        .writeValueAsString(categoryAnalysis);
+            }
 
             // 3. Detect bills and flag overspending (deterministic — must run before Bedrock)
             Map<String, AttributeValue> userData = userService.getUser(userId);
