@@ -344,7 +344,7 @@ public class TransactionCategorizer {
 
     /**
      * Re-categorize "Other" transactions using LLM (Bedrock/Claude).
-     * Batches uncategorized transactions and asks Claude to assign categories.
+     * Batches uncategorized transactions (50 at a time) and asks Claude to assign categories.
      * On failure, transactions remain as "Other" (graceful degradation).
      */
     public static void recategorizeWithLLM(CategoryAnalysis analysis, LambdaBedrockService bedrockService) {
@@ -357,89 +357,29 @@ public class TransactionCategorizer {
         System.out.println("[LLM Fallback] Attempting to recategorize " + otherTxns.size() + " transactions");
 
         try {
-            // Build a JSON array of descriptions for Claude
-            StringBuilder prompt = new StringBuilder();
-            prompt.append("Categorize each of these bank transaction descriptions into exactly one of these categories:\n");
-            prompt.append(String.join(", ", VALID_CATEGORIES));
-            prompt.append("\n\nReturn ONLY a JSON array where each element has \"description\" and \"category\". ");
-            prompt.append("If unsure, use the closest match. Do NOT invent new categories.\n\n");
-            prompt.append("Transactions:\n");
+            Map<String, String> allRecategorized = new HashMap<>();
+            int batchSize = 50;
+            int totalBatches = (int) Math.ceil((double) otherTxns.size() / batchSize);
 
-            for (int i = 0; i < otherTxns.size(); i++) {
-                prompt.append((i + 1) + ". " + otherTxns.get(i).description + "\n");
+            for (int batchNum = 0; batchNum < totalBatches; batchNum++) {
+                int startIdx = batchNum * batchSize;
+                int endIdx = Math.min(startIdx + batchSize, otherTxns.size());
+                List<TransactionDetail> batch = otherTxns.subList(startIdx, endIdx);
+
+                System.out.println("[LLM Fallback] Processing batch " + (batchNum + 1) + "/" + totalBatches +
+                        " (" + batch.size() + " transactions)");
+
+                Map<String, String> batchRecategorized = recategorizeBatch(batch);
+                allRecategorized.putAll(batchRecategorized);
             }
 
-            // Call Bedrock via the existing service
-            ObjectNode requestBody = objectMapper.createObjectNode();
-            requestBody.put("anthropic_version", "bedrock-2023-05-31");
-
-            ArrayNode systemBlocks = objectMapper.createArrayNode();
-            systemBlocks.addObject()
-                    .put("type", "text")
-                    .put("text", "You are a transaction categorizer. Respond with ONLY valid JSON, no markdown, no explanation.");
-            requestBody.set("system", systemBlocks);
-
-            ArrayNode messages = requestBody.putArray("messages");
-            ObjectNode userMessage = messages.addObject();
-            userMessage.put("role", "user");
-            userMessage.putArray("content").addObject()
-                    .put("type", "text")
-                    .put("text", prompt.toString());
-
-            requestBody.put("max_tokens", 4096);
-            requestBody.put("temperature", 0.0);
-
-            // Use reflection-free approach: build and invoke directly
-            software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient client =
-                    software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient.builder()
-                            .region(software.amazon.awssdk.regions.Region.of(System.getenv("AWS_REGION").trim()))
-                            .credentialsProvider(software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider.create())
-                            .build();
-
-            String modelId = System.getenv("BEDROCK_MODEL_ID").trim();
-
-            software.amazon.awssdk.services.bedrockruntime.model.InvokeModelResponse response = client.invokeModel(
-                    software.amazon.awssdk.services.bedrockruntime.model.InvokeModelRequest.builder()
-                            .modelId(modelId)
-                            .contentType("application/json")
-                            .accept("application/json")
-                            .body(software.amazon.awssdk.core.SdkBytes.fromUtf8String(
-                                    objectMapper.writeValueAsString(requestBody)))
-                            .build()
-            );
-
-            String responseBody = response.body().asUtf8String();
-            JsonNode responseJson = objectMapper.readTree(responseBody);
-            String llmText = responseJson.at("/content/0/text").asText("");
-
-            // Strip markdown code fences if present
-            llmText = llmText.replaceAll("```json\\s*", "").replaceAll("```\\s*", "").trim();
-
-            // Parse the JSON array response
-            JsonNode categorizations = objectMapper.readTree(llmText);
-            if (!categorizations.isArray()) {
-                System.err.println("[LLM Fallback] Response is not a JSON array, skipping");
-                return;
-            }
-
-            // Build a lookup: description → new category
-            Map<String, String> recategorized = new HashMap<>();
-            for (JsonNode item : categorizations) {
-                String desc = item.has("description") ? item.get("description").asText() : "";
-                String cat = item.has("category") ? item.get("category").asText() : "";
-                if (!desc.isEmpty() && !cat.isEmpty() && VALID_CATEGORIES.contains(cat)) {
-                    recategorized.put(desc.toLowerCase().trim(), cat);
-                }
-            }
-
-            // Move transactions from "Other" to their new categories
+            // Move all recategorized transactions
             List<TransactionDetail> remaining = new ArrayList<>();
             int movedCount = 0;
 
             for (TransactionDetail txn : otherTxns) {
-                String newCategory = recategorized.get(txn.description.toLowerCase().trim());
+                String newCategory = allRecategorized.get(txn.description.toLowerCase().trim());
                 if (newCategory != null) {
-                    // Move to new category
                     txn.category = newCategory;
                     analysis.categoryTotals.put(newCategory,
                             analysis.categoryTotals.getOrDefault(newCategory, 0.0) + txn.amount);
@@ -447,7 +387,6 @@ public class TransactionCategorizer {
                             analysis.categoryCounts.getOrDefault(newCategory, 0) + 1);
                     analysis.categoryTransactions.computeIfAbsent(newCategory, k -> new ArrayList<>()).add(txn);
 
-                    // Subtract from Other
                     analysis.categoryTotals.put("Other",
                             analysis.categoryTotals.get("Other") - txn.amount);
                     analysis.categoryCounts.put("Other",
@@ -459,10 +398,7 @@ public class TransactionCategorizer {
                 }
             }
 
-            // Update Other's transaction list
             analysis.categoryTransactions.put("Other", remaining);
-
-            // Recalculate biggest category
             analysis.biggestCategory = findBiggestCategory(analysis.categoryTotals);
 
             System.out.println("[LLM Fallback] Recategorized " + movedCount + "/" + otherTxns.size() +
@@ -470,8 +406,79 @@ public class TransactionCategorizer {
 
         } catch (Exception e) {
             System.err.println("[LLM Fallback] Failed (graceful degradation): " + e.getMessage());
-            // Transactions stay as "Other" — no data loss
+            e.printStackTrace();
         }
+    }
+
+    private static Map<String, String> recategorizeBatch(List<TransactionDetail> batch) throws Exception {
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("Categorize each of these bank transaction descriptions into exactly one of these categories:\n");
+        prompt.append(String.join(", ", VALID_CATEGORIES));
+        prompt.append("\n\nReturn ONLY a JSON array where each element has \"description\" and \"category\". ");
+        prompt.append("If unsure, use the closest match. Do NOT invent new categories.\n\n");
+        prompt.append("Transactions:\n");
+
+        for (int i = 0; i < batch.size(); i++) {
+            prompt.append((i + 1) + ". " + batch.get(i).description + "\n");
+        }
+
+        ObjectNode requestBody = objectMapper.createObjectNode();
+        requestBody.put("anthropic_version", "bedrock-2023-05-31");
+
+        ArrayNode systemBlocks = objectMapper.createArrayNode();
+        systemBlocks.addObject()
+                .put("type", "text")
+                .put("text", "You are a transaction categorizer. Respond with ONLY valid JSON, no markdown, no explanation.");
+        requestBody.set("system", systemBlocks);
+
+        ArrayNode messages = requestBody.putArray("messages");
+        ObjectNode userMessage = messages.addObject();
+        userMessage.put("role", "user");
+        userMessage.putArray("content").addObject()
+                .put("type", "text")
+                .put("text", prompt.toString());
+
+        requestBody.put("max_tokens", 2048);
+        requestBody.put("temperature", 0.0);
+
+        software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient client =
+                software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient.builder()
+                        .region(software.amazon.awssdk.regions.Region.of(System.getenv("AWS_REGION").trim()))
+                        .credentialsProvider(software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider.create())
+                        .build();
+
+        String modelId = System.getenv("BEDROCK_MODEL_ID").trim();
+
+        software.amazon.awssdk.services.bedrockruntime.model.InvokeModelResponse response = client.invokeModel(
+                software.amazon.awssdk.services.bedrockruntime.model.InvokeModelRequest.builder()
+                        .modelId(modelId)
+                        .contentType("application/json")
+                        .accept("application/json")
+                        .body(software.amazon.awssdk.core.SdkBytes.fromUtf8String(
+                                objectMapper.writeValueAsString(requestBody)))
+                        .build()
+        );
+
+        String responseBody = response.body().asUtf8String();
+        JsonNode responseJson = objectMapper.readTree(responseBody);
+        String llmText = responseJson.at("/content/0/text").asText("");
+
+        llmText = llmText.replaceAll("```json\\s*", "").replaceAll("```\\s*", "").trim();
+
+        JsonNode categorizations = objectMapper.readTree(llmText);
+        Map<String, String> recategorized = new HashMap<>();
+
+        if (categorizations.isArray()) {
+            for (JsonNode item : categorizations) {
+                String desc = item.has("description") ? item.get("description").asText() : "";
+                String cat = item.has("category") ? item.get("category").asText() : "";
+                if (!desc.isEmpty() && !cat.isEmpty() && VALID_CATEGORIES.contains(cat)) {
+                    recategorized.put(desc.toLowerCase().trim(), cat);
+                }
+            }
+        }
+
+        return recategorized;
     }
 
     /**
