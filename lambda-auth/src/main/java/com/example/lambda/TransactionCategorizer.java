@@ -359,10 +359,16 @@ public class TransactionCategorizer {
                     String category = item.get("category").s();
 
                     if (merchant != null && category != null && !merchant.isEmpty() && !category.isEmpty()) {
-                        CATEGORY_PATTERNS
-                                .computeIfAbsent(category, k -> new ArrayList<>())
-                                .add(Pattern.compile("\\b" + Pattern.quote(merchant) + "\\b",
-                                        Pattern.CASE_INSENSITIVE));
+                        List<Pattern> patterns = CATEGORY_PATTERNS.get(category);
+                        if (patterns == null) {
+                            patterns = new ArrayList<>();
+                            CATEGORY_PATTERNS.put(category, patterns);
+                        } else if (!(patterns instanceof ArrayList)) {
+                            patterns = new ArrayList<>(patterns);
+                            CATEGORY_PATTERNS.put(category, patterns);
+                        }
+                        patterns.add(Pattern.compile("\\b" + Pattern.quote(merchant) + "\\b",
+                                Pattern.CASE_INSENSITIVE));
                         loadedCount++;
                     }
                 }
