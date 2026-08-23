@@ -343,35 +343,42 @@ public class TransactionCategorizer {
 
     private static void loadLearntPatterns() {
         try {
+            System.out.println("[TransactionCategorizer] Starting to load learned patterns from DynamoDB");
             DynamoDbClient client = DynamoDbClient.builder().build();
             ScanRequest scanRequest = ScanRequest.builder()
                     .tableName("GuideYa-LearntPatterns")
                     .build();
 
             ScanResponse response = client.scan(scanRequest);
+            System.out.println("[TransactionCategorizer] DynamoDB scan returned " + response.count() + " items");
 
             int loadedCount = 0;
-            for (Map<String, AttributeValue> item : response.items()) {
-                String merchant = item.get("merchant").s();
-                String category = item.get("category").s();
+            if (response.items() != null) {
+                for (Map<String, AttributeValue> item : response.items()) {
+                    String merchant = item.get("merchant").s();
+                    String category = item.get("category").s();
 
-                if (merchant != null && category != null && !merchant.isEmpty() && !category.isEmpty()) {
-                    CATEGORY_PATTERNS
-                            .computeIfAbsent(category, k -> new ArrayList<>())
-                            .add(Pattern.compile("\\b" + Pattern.quote(merchant) + "\\b",
-                                    Pattern.CASE_INSENSITIVE));
-                    loadedCount++;
+                    if (merchant != null && category != null && !merchant.isEmpty() && !category.isEmpty()) {
+                        CATEGORY_PATTERNS
+                                .computeIfAbsent(category, k -> new ArrayList<>())
+                                .add(Pattern.compile("\\b" + Pattern.quote(merchant) + "\\b",
+                                        Pattern.CASE_INSENSITIVE));
+                        loadedCount++;
+                    }
                 }
             }
 
             if (loadedCount > 0) {
                 System.out.println("[TransactionCategorizer] Loaded " + loadedCount +
                         " learned patterns from DynamoDB");
+            } else {
+                System.out.println("[TransactionCategorizer] No learned patterns found in DynamoDB");
             }
 
             client.close();
         } catch (Exception e) {
             System.err.println("[TransactionCategorizer] Failed to load learned patterns: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
