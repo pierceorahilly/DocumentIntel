@@ -4,6 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.ScanRequest;
+import software.amazon.awssdk.services.dynamodb.model.ScanResponse;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -182,6 +186,10 @@ public class TransactionCategorizer {
         ));
     }};
 
+    static {
+        loadLearntPatterns();
+    }
+
     /**
      * Categorize transactions and calculate spending analysis.
      * Returns categorized data with totals, subscriptions, and insights.
@@ -331,6 +339,40 @@ public class TransactionCategorizer {
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
                 .orElse("None");
+    }
+
+    private static void loadLearntPatterns() {
+        try {
+            DynamoDbClient client = DynamoDbClient.builder().build();
+            ScanRequest scanRequest = ScanRequest.builder()
+                    .tableName("GuideYa-LearntPatterns")
+                    .build();
+
+            ScanResponse response = client.scan(scanRequest);
+
+            int loadedCount = 0;
+            for (Map<String, AttributeValue> item : response.items()) {
+                String merchant = item.get("merchant").s();
+                String category = item.get("category").s();
+
+                if (merchant != null && category != null && !merchant.isEmpty() && !category.isEmpty()) {
+                    CATEGORY_PATTERNS
+                            .computeIfAbsent(category, k -> new ArrayList<>())
+                            .add(Pattern.compile("\\b" + Pattern.quote(merchant) + "\\b",
+                                    Pattern.CASE_INSENSITIVE));
+                    loadedCount++;
+                }
+            }
+
+            if (loadedCount > 0) {
+                System.out.println("[TransactionCategorizer] Loaded " + loadedCount +
+                        " learned patterns from DynamoDB");
+            }
+
+            client.close();
+        } catch (Exception e) {
+            System.err.println("[TransactionCategorizer] Failed to load learned patterns: " + e.getMessage());
+        }
     }
 
     /**
