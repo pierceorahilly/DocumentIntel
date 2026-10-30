@@ -14,7 +14,7 @@ class TrustalApp extends ConsumerWidget {
 
     if (Platform.isIOS) {
       return CupertinoApp.router(
-        title: 'Trustal',
+        title: 'DocInsight',
         theme: AppTheme.cupertinoTheme,
         routerConfig: router,
         debugShowCheckedModeBanner: false,
@@ -22,7 +22,7 @@ class TrustalApp extends ConsumerWidget {
     }
 
     return MaterialApp.router(
-      title: 'Trustal',
+      title: 'DocInsight',
       theme: AppTheme.materialTheme,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
