@@ -6,7 +6,6 @@ import '../../upload/providers/upload_provider.dart';
 import '../providers/results_provider.dart';
 import '../widgets/bill_alert_card.dart';
 import '../widgets/contact_request_section.dart';
-import '../widgets/advice_section.dart';
 import '../widgets/spending_insights.dart';
 import '../widgets/transaction_list.dart';
 import '../widgets/spending_pie_chart.dart';
@@ -74,12 +73,6 @@ class ResultsScreen extends ConsumerWidget {
             BillAlertCard(billFlags: result.billFlags!),
             const SizedBox(height: 8),
             ContactRequestSection(billFlags: result.billFlags!),
-            const SizedBox(height: 16),
-          ],
-
-          // Financial advice
-          if (result.advice != null && result.advice!.isNotEmpty) ...[
-            AdviceSection(advice: result.advice!),
             const SizedBox(height: 16),
           ],
 
