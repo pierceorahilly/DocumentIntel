@@ -28,7 +28,7 @@ class UploadScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Trustal'),
+        title: const Text('DocInsight'),
         actions: [
           if (isIOS)
             CupertinoButton(
